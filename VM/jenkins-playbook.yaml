@@ -1,0 +1,44 @@
+---
+- hosts: all
+  become: yes
+  remote_user: azureuser
+  become_user: root
+  tasks:
+
+  - name: Add Jenkins apt repository key.
+    ansible.builtin.get_url:
+      url: https://pkg.jenkins.io/debian-stable/jenkins.io.key 
+      dest: /etc/apt/trusted.gpg.d/jenkins.asc
+      mode: '0644'
+      force: true
+
+  - name: add repository to vm
+    ansible.builtin.apt_repository:
+      repo: "deb https://pkg.jenkins.io/debian-stable binary/"
+      state: present
+      update_cache: true
+
+
+  - name: apt update
+    ansible.builtin.apt:
+      name: '*'
+      state: latest
+
+  - name: Install java 11
+    ansible.builtin.apt:
+      name: openjdk-11-jre
+      state: present
+
+  - name: Install jenkins
+    ansible.builtin.apt:
+      name: jenkins
+      state: latest
+
+  - name: daemon-reload to pick up config changes
+    ansible.builtin.systemd:
+      daemon_reload: yes
+
+  - name: Start jenkins
+    ansible.builtin.systemd:
+      name: jenkins
+      state: started
